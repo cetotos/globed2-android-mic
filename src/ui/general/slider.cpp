@@ -9,7 +9,7 @@ constexpr float FILL_PAD = 2.f;
 constexpr float KNOB_PAD = 4.f;
 
 bool BetterSlider::init() {
-    if (!ProgressBar::init()) return false;
+    if (!GlobedProgressBar::init()) return false;
 
     Build<Knob>::create(this)
         .zOrder(10)
@@ -27,7 +27,7 @@ bool BetterSlider::init() {
 
 void BetterSlider::setContentSize(const CCSize& size) {
     if (!knob) {
-        ProgressBar::setContentSize(size);
+        GlobedProgressBar::setContentSize(size);
         return;
     }
 
@@ -35,7 +35,7 @@ void BetterSlider::setContentSize(const CCSize& size) {
 }
 
 void BetterSlider::setup(CCSize size) {
-    ProgressBar::setup(size);
+    GlobedProgressBar::setup(size);
 
     knob->setPositionY(outlineStart->getScaledContentHeight() / 2.f);
 
@@ -65,7 +65,7 @@ double BetterSlider::getValue() {
 }
 
 double BetterSlider::getValueRaw() {
-    return ProgressBar::getValue();
+    return GlobedProgressBar::getValue();
 }
 
 void BetterSlider::setValue(double value) {
@@ -74,9 +74,9 @@ void BetterSlider::setValue(double value) {
 }
 
 void BetterSlider::setValueRaw(double value) {
-    ProgressBar::setValue(value);
+    GlobedProgressBar::setValue(value);
 
-    knob->setPositionX(KNOB_PAD + (this->getContentWidth() - KNOB_PAD * 2) * ProgressBar::getValue());
+    knob->setPositionX(KNOB_PAD + (this->getContentWidth() - KNOB_PAD * 2) * GlobedProgressBar::getValue());
 }
 
 bool BetterSlider::ccTouchBegan(CCTouch* touch, CCEvent* event) {

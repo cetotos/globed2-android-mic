@@ -143,6 +143,7 @@ private:
     EncodedAudioFrame recordFrame;
 
     Result<> startRecordingInternal(bool passive = false);
+    Result<> startRecordingInternalFmod();
     void recordContinueStream();
     void recordInvokeCallback();
     void recordInvokeRawCallback(float* pcm, size_t samples);

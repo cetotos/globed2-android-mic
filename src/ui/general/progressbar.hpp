@@ -2,9 +2,9 @@
 
 #include <defs/geode.hpp>
 
-class ProgressBar : public cocos2d::CCMenu {
+class GlobedProgressBar : public cocos2d::CCMenu {
 public:
-    static ProgressBar* create();
+    static GlobedProgressBar* create();
 
     void setContentSize(const cocos2d::CCSize& size) override;
 

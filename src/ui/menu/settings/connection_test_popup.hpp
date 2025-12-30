@@ -63,7 +63,7 @@ public:
     };
 
 protected:
-    ProgressBar* progressBar;
+    GlobedProgressBar* progressBar;
     asp::Thread<> workThread;
     bool hasBeenStarted = false;
     bool reallyClose = false;

@@ -240,6 +240,21 @@ Result<> GlobedAudioManager::startRecordingInternal(bool passive) {
     GLOBED_REQUIRE_SAFE(this->recordDevice.has_value(), "no recording device is set")
     GLOBED_REQUIRE_SAFE(!this->isRecording() && !recordActive, "attempting to record when already recording")
 
+    auto result = this->startRecordingInternalFmod();
+    if (result.isErr()) {
+        return result;
+    }
+
+    recordQueuedStop = false;
+    recordQueuedHalt = false;
+    recordLastPosition = 0;
+    recordActive = true;
+    recordingPassive = passive;
+
+    return Ok();
+}
+
+Result<> GlobedAudioManager::startRecordingInternalFmod() {
     if (recordSound != nullptr) {
         recordSound->release();
         recordSound = nullptr;
@@ -268,12 +283,6 @@ Result<> GlobedAudioManager::startRecordingInternal(bool passive) {
     }
 
     FMOD_ERR_CHECK_SAFE(res, "System::recordStart")
-
-    recordQueuedStop = false;
-    recordQueuedHalt = false;
-    recordLastPosition = 0;
-    recordActive = true;
-    recordingPassive = passive;
 
     return Ok();
 }

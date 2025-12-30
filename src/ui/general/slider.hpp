@@ -4,7 +4,7 @@
 #include <functional>
 #include "progressbar.hpp"
 
-class BetterSlider : public ProgressBar {
+class BetterSlider : public GlobedProgressBar {
 public:
     using Callback = std::function<void(BetterSlider*, double value)>;
 

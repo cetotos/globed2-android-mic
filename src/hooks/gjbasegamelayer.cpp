@@ -15,7 +15,9 @@
 #include <managers/room.hpp>
 #include <data/packets/client/game.hpp>
 #include <data/packets/client/general.hpp>
+#include <data/packets/client/misc.hpp>
 #include <data/packets/server/game.hpp>
+#include <net/manager.hpp>
 #include <game/module/all.hpp>
 #include <game/camera_state.hpp>
 #include <hooks/game_manager.hpp>
@@ -31,6 +33,68 @@
 
 using namespace geode::prelude;
 using namespace asp::time;
+
+#if defined(GEODE_IS_ANDROID) && defined(GLOBED_VOICE_CAN_TALK)
+// Simple speak button for Android - holds to talk
+class AndroidSpeakButton : public CCMenu {
+public:
+    static AndroidSpeakButton* create() {
+        auto ret = new AndroidSpeakButton();
+        if (ret->init()) {
+            ret->autorelease();
+            return ret;
+        }
+        delete ret;
+        return nullptr;
+    }
+
+    bool init() override {
+        if (!CCMenu::init()) return false;
+
+        auto sprite = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
+        if (!sprite) {
+            sprite = CCSprite::create("GJ_chatBtn_001.png");
+        }
+        if (sprite) {
+            sprite->setScale(1.2f);
+            this->addChild(sprite);
+            this->setContentSize(sprite->getScaledContentSize());
+            sprite->setPosition(this->getContentSize() / 2);
+        }
+
+        this->setTouchPriority(-200);
+        return true;
+    }
+
+    bool ccTouchBegan(CCTouch* touch, CCEvent* event) override {
+        auto loc = this->convertToNodeSpace(touch->getLocation());
+        auto size = this->getContentSize();
+
+        if (loc.x >= 0 && loc.x <= size.width && loc.y >= 0 && loc.y <= size.height) {
+            m_isTouching = true;
+            GlobedAudioManager::get().resumePassiveRecording();
+            this->setScale(0.9f);
+            return true;
+        }
+        return false;
+    }
+
+    void ccTouchEnded(CCTouch* touch, CCEvent* event) override {
+        if (m_isTouching) {
+            m_isTouching = false;
+            GlobedAudioManager::get().pausePassiveRecording();
+            this->setScale(1.0f);
+        }
+    }
+
+    void ccTouchCancelled(CCTouch* touch, CCEvent* event) override {
+        ccTouchEnded(touch, event);
+    }
+
+private:
+    bool m_isTouching = false;
+};
+#endif
 
 #define GLOBED_INVALID_THIS [&]{ static_assert(false, "`this` cannot be safely used inside those selectors, they are scheduled on the scene"); return decltype(this){}; }()
 
@@ -268,9 +332,29 @@ void GlobedGJBGL::setupAudio() {
         // set the record buffer size
         vm.setRecordBufferCapacity(settings.communication.lowerAudioLatency ? EncodedAudioFrame::LIMIT_LOW_LATENCY : EncodedAudioFrame::LIMIT_REGULAR);
 
+#   if defined(GEODE_IS_ANDROID) || defined(GLOBED_TEST_MAINTHREAD_RECORDING)
+        // On Android (or when testing), start recording directly from main thread (FMOD OpenSL requires it)
+        if (vm.isRecordingDeviceSet()) {
+            vm.startPassiveRecording([](const EncodedAudioFrame& frame) {
+                auto& nm = NetworkManager::get();
+                if (!nm.established()) return;
+
+                ByteBuffer buf;
+                buf.writeValue(frame);
+
+                nm.send(RawPacket::create(
+                    VoicePacket::PACKET_ID,
+                    VoicePacket::ENCRYPTED,
+                    GlobedSettings::get().communication.tcpAudio ? true : VoicePacket::SHOULD_USE_TCP,
+                    std::move(buf)
+                ));
+            });
+        }
+#   else
         // start passive voice recording
         auto& vrm = VoiceRecordingManager::get();
         vrm.startRecording();
+#   endif
 # endif // GLOBED_VOICE_CAN_TALK
 
         if (settings.levelUi.voiceOverlay) {
@@ -280,6 +364,17 @@ void GlobedGJBGL::setupAudio() {
                 .anchorPoint(1.f, 0.f)
                 .collect();
         }
+
+#   ifdef GEODE_IS_ANDROID
+        // Add speak button for Android (hold to talk)
+        if (vm.isRecordingDeviceSet()) {
+            auto speakBtn = AndroidSpeakButton::create();
+            if (speakBtn) {
+                speakBtn->setPosition(30.f, 30.f);
+                m_uiLayer->addChild(speakBtn, 100);
+            }
+        }
+#   endif
     }
 
     GLOBED_EVENT(this, setupAudio());

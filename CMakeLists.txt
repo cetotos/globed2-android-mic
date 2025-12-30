@@ -27,6 +27,7 @@ option(GLOBED_LESS_BINDINGS "Disable extra hooks & calls to some GD functions, u
 option(GLOBED_GP_CHANGES "a" OFF)
 option(GLOBED_LINK_TO_FMOD "Whether to link to FMOD, disables voice chat if off" ON)
 option(GLOBED_ENABLE_STACKTRACE "Whether to enable stacktrace library" OFF)
+option(GLOBED_TEST_MAINTHREAD_RECORDING "Force main thread recording (for testing Android fix on Windows)" OFF)
 
 # on windows use precompiled, on other platforms compile libsodium
 if (WIN32)
@@ -105,9 +106,13 @@ endif()
 if (GLOBED_LINK_TO_FMOD AND NOT GLOBED_DISABLE_VOICE_SUPPORT)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLOBED_VOICE_SUPPORT=1)
 
-    if (WIN32)
+    if (WIN32 OR ANDROID)
         target_compile_definitions(${PROJECT_NAME} PRIVATE GLOBED_VOICE_CAN_TALK=1)
     endif()
+endif()
+
+if (GLOBED_TEST_MAINTHREAD_RECORDING)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GLOBED_TEST_MAINTHREAD_RECORDING=1)
 endif()
 
 # Debug/Release options

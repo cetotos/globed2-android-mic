@@ -9,7 +9,7 @@ constexpr static float FILL_PAD = 2.f;
 // this is kinda bad but eh whatever
 constexpr static float OUTLINE_SCALE = 0.69f;
 
-bool ProgressBar::init() {
+bool GlobedProgressBar::init() {
     if (!CCMenu::init()) return false;
 
     // stupid ass cocos conventions why do i have to do that
@@ -65,7 +65,7 @@ bool ProgressBar::init() {
     return true;
 }
 
-void ProgressBar::setContentSize(const CCSize& size) {
+void GlobedProgressBar::setContentSize(const CCSize& size) {
     if (!outlineStart) {
         CCMenu::setContentSize(size);
         return;
@@ -74,7 +74,7 @@ void ProgressBar::setContentSize(const CCSize& size) {
     this->setup(size);
 }
 
-void ProgressBar::setup(CCSize size) {
+void GlobedProgressBar::setup(CCSize size) {
     float width = size.width;
     float height = outlineStart->getScaledContentHeight();
 
@@ -90,11 +90,11 @@ void ProgressBar::setup(CCSize size) {
     CCMenu::setContentSize({width, height});
 }
 
-double ProgressBar::getValue() {
+double GlobedProgressBar::getValue() {
     return rawvalue;
 }
 
-void ProgressBar::setValue(double value) {
+void GlobedProgressBar::setValue(double value) {
     this->rawvalue = std::clamp(value, 0.0, 1.0);
 
     // update fill
@@ -105,8 +105,8 @@ void ProgressBar::setValue(double value) {
     fill->setTextureRect({0.f, 0.f, width, outlineStart->getScaledContentHeight()});
 }
 
-ProgressBar* ProgressBar::create() {
-    auto ret = new ProgressBar;
+GlobedProgressBar* GlobedProgressBar::create() {
+    auto ret = new GlobedProgressBar;
     if (ret->init()) {
         ret->autorelease();
         return ret;
